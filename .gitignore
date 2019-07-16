@@ -1,0 +1,17 @@
+__pycache__/
+*.json
+Payload/
+Spotify/
+*.plist
+*.swp
+*.ipa
+call_graphs/
+*.txt
+frida-scripts/
+*.dump
+__handlers__/
+build.sh
+*.plist
+client/
+spmod
+Spotify

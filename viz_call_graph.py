@@ -1,35 +1,41 @@
 from graphviz import Digraph
 import sys
+import os
 from os.path import isfile
 import json
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
-		print('Please provide a class name')
-		exit()
+		classnames = [f[:f.index('.json')] for f in os.listdir('call_graphs') if f.endswith('.json')]
+	else:
+		classnames = sys.argv[1:]
 
-	classname = sys.argv[1]
-	call_graph_fname = 'call_graphs/%s.json' % classname
-	if not isfile(call_graph_fname):
-		print('Call graph does not exist')
-		exit()
-
-	with open(call_graph_fname) as f:
-		calls = json.loads(f.read())
-
-	dot = Digraph(comment=classname, engine='fdp')
+	title = '_'.join(classnames[:min(3, len(classnames))])
+	dot = Digraph(comment=title, engine='fdp')
 	methods = []
 
-	for methname, methcalls in calls.items():
-		if not methname in methods:
-			methods.append(methname)
-			dot.node(methname)
+	for classname in classnames:
+		call_graph_fname = 'call_graphs/%s.json' % classname
+		if not isfile(call_graph_fname):
+			print('Call graph does not exist')
+			exit()
 
-		for called_methname in methcalls:
-			if not called_methname in methods:
-				methods.append(called_methname)
-				dot.node(called_methname)
+		with open(call_graph_fname) as f:
+			calls = json.loads(f.read())
 
-			dot.edge(methname, called_methname)
+		for methname, methcalls in calls.items():
+			methname = methname.strip(':').replace(':', '-')
 
-	dot.render('call_graphs/%s.gv' % classname, view=True)
+			if not methname in methods:
+				methods.append(methname)
+				dot.node(methname)
+
+			for called_methname in methcalls:
+				called_methname = called_methname.strip(':').replace(':', '-')
+				if not called_methname in methods:
+					methods.append(called_methname)
+					dot.node(called_methname)
+
+				dot.edge(methname, called_methname)
+
+	dot.render('call_graphs/%s.gv' % title, view=True)

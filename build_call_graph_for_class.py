@@ -15,7 +15,11 @@ def get_calls(r, classname, func_disasm):
 			continue
 
 		r.cmd('s %d' % inst['offset'])
-		sel_cmt = r.cmd('CC.').strip('\n')
+		try:
+			sel_cmt = r.cmd('CC.').strip('\n')
+		except UnicodeDecodeError:
+			continue
+
 		if not '(' in sel_cmt:
 			continue
 

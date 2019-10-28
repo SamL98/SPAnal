@@ -15,6 +15,7 @@ and make the following assumptions:
 import re
 import sys
 import r2pipe
+import argparse
 
 def resolve_selectors_in_func(r, func):
 	if func is None:
@@ -90,19 +91,29 @@ def resolve_selectors_in_func(r, func):
 
 
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		print('Please provide an address')
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--impptr', dest='impptr', type=int, default=None)
+	parser.add_argument('--func_name', dest='func_name', type=str, default=None)
+	args = parser.parse_args()
+
+	impptr = None
+	func_name = None
+
+	if args.impptr:
+		impptr = args.impptr
+		if impptr % 2 != 0: impptr -= 1
+		func_name = 'func.%08x' % impptr
+		impptr = hex(impptr)
+	elif args.func_name:
+		func_name = args.func_name
+		impptr = func_name
+	else:
+		print('Please provide an imp pointer or func name')
 		exit()
 
-	impptr = int(sys.argv[1], 16)
-	if impptr % 2 != 0:
-		impptr -= 1
-
-	func_name = 'func.%08x' % impptr
-
 	r = r2pipe.open('http://localhost:9090')
-	r.cmd('afr %s @ %d' % (func_name, impptr))
+	r.cmd('afr %s @ %s' % (func_name, impptr))
 
-	func = r.cmdj('pdfj @ %d' % impptr)
+	func = r.cmdj('pdfj @ %s' % impptr)
 	resolve_selectors_in_func(r, func)
 

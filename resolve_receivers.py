@@ -1,15 +1,18 @@
 import base64 as b64
 from resolve_selectors import resolve_selectors_in_func
+import sys
+import r2pipe
+import json
 
-
-def resolve_receivers_in_func(r, func, classes):
+def resolve_receivers_in_func(r, func, classes, classname=None):
 	if func is None:
 		return
 
 	func_disasm = func['ops']
 	
-	full_methname = func['name']
-	classname = full_methname.split('.')[1]
+	if classname is None:
+		full_methname = func['name']
+		classname = full_methname.split('.')[1]
 
 	curr_instances = { classname: 'self' }
 	sel2class = { sel: classname for sel in classes[classname]['methods'].keys() }
@@ -67,3 +70,21 @@ def resolve_receivers_in_func(r, func, classes):
 			cmt = '%s (%s)' % (cmt, rettype)
 
 		r.cmd('CC %s' % cmt)
+
+
+if __name__ == '__main__':
+	if len(sys.argv) < 2:
+		print('Please provide a function name')
+		exit()
+
+	classname = None
+	if len(sys.argv) > 2:
+		classname = sys.argv[2]
+
+	with open('classes.json') as f:
+		classes = json.loads(f.read())
+
+	r = r2pipe.open('http://localhost:9090')
+	func = r.cmdj('pdfj @ %s' % sys.argv[1])
+	resolve_receivers_in_func(r, func, classes, classname=classname)
+
